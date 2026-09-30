@@ -81,7 +81,7 @@
 
                 bridgeFrame = document.createElement('iframe');
                 bridgeFrame.id = 'pulpas-gas-bridge';
-                bridgeFrame.src = PULPAS_APPS_SCRIPT_URL + (PULPAS_APPS_SCRIPT_URL.indexOf('?') >= 0 ? '&' : '?') + 'bridge=1';
+                bridgeFrame.src = PULPAS_APPS_SCRIPT_URL + (PULPAS_APPS_SCRIPT_URL.indexOf('?') >= 0 ? '&' : '?') + 'bridge=1&_=' + Date.now();
                 bridgeFrame.setAttribute('aria-hidden', 'true');
                 bridgeFrame.style.cssText = 'position:fixed;left:-20px;bottom:-20px;width:1px;height:1px;border:0;opacity:0;pointer-events:none;';
                 document.documentElement.appendChild(bridgeFrame);
@@ -2469,13 +2469,17 @@ palabras.</h2>
             const original = btn ? btn.textContent : '';
             if (btn) {
                 btn.disabled = true;
-                btn.textContent = 'Registrando solicitud…';
+                btn.textContent = 'Abriendo WhatsApp…';
                 btn.style.opacity = '.75';
             }
 
+            // WhatsApp must not depend on Sheets/backend availability.
             const waUrl = buildWhatsAppUrl(payload);
             let waWindow = null;
-            try { waWindow = window.open('about:blank', '_blank'); } catch (e) {}
+            try { waWindow = window.open(waUrl, '_blank'); } catch (e) {}
+            if (!waWindow) {
+                try { window.location.href = waUrl; } catch (e) {}
+            }
 
             const finish = (ok, message) => {
                 if (btn) {
@@ -2484,26 +2488,21 @@ palabras.</h2>
                     btn.style.opacity = '1';
                 }
                 if (message) showToast(message);
-                if (waWindow && !waWindow.closed) {
-                    waWindow.location = waUrl;
-                } else {
-                    window.location.href = waUrl;
-                }
                 if (ok) resetDegustationForm();
             };
 
             if (typeof google === 'undefined' || !google.script || !google.script.run) {
-                finish(false, 'No se pudo registrar en Sheets, pero se abrirá WhatsApp.');
+                finish(false, 'WhatsApp abierto. No se pudo registrar la solicitud en el CMS.');
                 return;
             }
 
             google.script.run
                 .withSuccessHandler((res) => {
-                    if (res && res.ok) finish(true, 'Solicitud registrada. Te llevamos a WhatsApp.');
-                    else finish(false, (res && res.error) || 'No se pudo registrar en Sheets.');
+                    if (res && res.ok) finish(true, 'Solicitud registrada correctamente.');
+                    else finish(false, (res && res.error) || 'WhatsApp abierto; no se pudo registrar en Sheets.');
                 })
                 .withFailureHandler((err) => {
-                    finish(false, (err && err.message) || 'Error al registrar la solicitud.');
+                    finish(false, (err && err.message) || 'WhatsApp abierto; falló el registro en Sheets.');
                 })
                 .createLead(payload);
         }
@@ -2788,7 +2787,7 @@ palabras.</h2>
         (function initPulpasRuntime() {
             const boot = window.__PULPAS_BOOT__ || {};
             const params = new URLSearchParams(window.location.search);
-            const githubMode = params.get('admin') === '1' || params.get('view') === 'admin' ? 'admin' : 'client';
+            const githubMode = params.get('client') === '1' || params.get('view') === 'client' ? 'client' : 'admin';
             window.__PULPAS_MODE__ = boot.mode === 'client' ? 'client' : (boot.mode === 'admin' ? 'admin' : githubMode);
             document.documentElement.classList.toggle('pulpas-client-mode', window.__PULPAS_MODE__ === 'client');
             window.__PULPAS_ADMIN_AUTH__ = false;
