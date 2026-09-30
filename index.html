@@ -60,82 +60,89 @@
 
     <!-- PULPAS YA: Compatibilidad GitHub Pages <-> Google Apps Script -->
     <script>
-        // URL de la implementación Web App de ESTE mismo proyecto de Apps Script.
-        // No es necesario cambiarla cuando publiques una nueva versión del deployment
-        // si mantienes la misma implementación; si generas otra, actualiza esta URL.
+        // Web App de Google Apps Script que conserva Sheets, Drive y el CMS.
         const PULPAS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8ATLJkIdBzWkqAuoBe4VZgjZWkh8hvgm55XvRPbFz0ahcFrf6jBg1FgWSAfe2mYTaxQ/exec';
 
         (function installPulpasGitHubBridge() {
-            // Dentro de Apps Script ya existe google.script.run: no hacemos nada.
+            // Dentro de Apps Script ya existe google.script.run; dejamos el
+            // comportamiento nativo sin tocarlo.
             if (window.google && window.google.script && window.google.script.run) return;
 
-            const queue = [];
             const pending = new Map();
-            let bridgeFrame = null;
-            let bridgeReady = false;
             let sequence = 0;
 
-            function ensureBridgeFrame() {
-                if (bridgeFrame) return bridgeFrame;
-                if (!PULPAS_APPS_SCRIPT_URL) return null;
-
-                bridgeFrame = document.createElement('iframe');
-                bridgeFrame.id = 'pulpas-gas-bridge';
-                bridgeFrame.src = PULPAS_APPS_SCRIPT_URL + (PULPAS_APPS_SCRIPT_URL.indexOf('?') >= 0 ? '&' : '?') + 'bridge=1&_=' + Date.now();
-                bridgeFrame.setAttribute('aria-hidden', 'true');
-                bridgeFrame.style.cssText = 'position:fixed;left:-20px;bottom:-20px;width:1px;height:1px;border:0;opacity:0;pointer-events:none;';
-                document.documentElement.appendChild(bridgeFrame);
-                return bridgeFrame;
+            function cleanup(item) {
+                try { if (item.form) item.form.remove(); } catch (e) {}
+                try { if (item.frame) item.frame.remove(); } catch (e) {}
+                pending.delete(item.id);
             }
 
-            function sendQueuedCalls() {
-                if (!bridgeReady || !bridgeFrame || !bridgeFrame.contentWindow) return;
-                while (queue.length) {
-                    const item = queue.shift();
-                    pending.set(item.id, item);
-                    bridgeFrame.contentWindow.postMessage({
-                        source: 'pulpas-pages',
-                        id: item.id,
-                        fn: item.fn,
-                        args: item.args
-                    }, '*');
+            function callRemote(fn, args, success, failure) {
+                const id = 'pulpas_' + (++sequence) + '_' + Date.now();
+                const frameName = 'pulpas_response_' + sequence;
+                const frame = document.createElement('iframe');
+                frame.name = frameName;
+                frame.id = frameName;
+                frame.setAttribute('aria-hidden', 'true');
+                frame.style.cssText = 'position:fixed;left:-40px;bottom:-40px;width:1px;height:1px;border:0;opacity:0;pointer-events:none;';
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = PULPAS_APPS_SCRIPT_URL;
+                form.target = frameName;
+                form.style.display = 'none';
+
+                const addField = (name, value) => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = name;
+                    input.value = value;
+                    form.appendChild(input);
+                };
+
+                addField('source', 'pulpas-github-pages');
+                addField('id', id);
+                addField('fn', fn);
+                addField('args', JSON.stringify(args || []));
+
+                const item = {
+                    id,
+                    frame,
+                    form,
+                    success: typeof success === 'function' ? success : function () {},
+                    failure: typeof failure === 'function' ? failure : function () {}
+                };
+                pending.set(id, item);
+                document.body.appendChild(frame);
+                document.body.appendChild(form);
+
+                try {
+                    form.submit();
+                } catch (err) {
+                    cleanup(item);
+                    item.failure({ message: err && err.message ? err.message : String(err) });
+                    return;
                 }
+
+                // Evita que una petición colgada deje elementos ocultos para siempre.
+                setTimeout(() => {
+                    if (!pending.has(id)) return;
+                    cleanup(item);
+                    item.failure({ message: 'Tiempo de espera agotado al conectar con Google Apps Script.' });
+                }, 60000);
             }
 
             window.addEventListener('message', function (event) {
                 const data = event.data || {};
-                if (data.source !== 'pulpas-gas-bridge') return;
-                if (!bridgeFrame || event.source !== bridgeFrame.contentWindow) return;
-
-                if (data.type === 'ready') {
-                    bridgeReady = true;
-                    sendQueuedCalls();
-                    return;
-                }
-
+                if (data.source !== 'pulpas-gas-post') return;
                 const item = pending.get(data.id);
                 if (!item) return;
-                pending.delete(data.id);
+                if (event.source !== item.frame.contentWindow) return;
 
-                if (data.ok) {
-                    item.success(data.result);
-                } else {
-                    item.failure({ message: data.error || 'Error de comunicación con Google Apps Script.' });
-                }
+                cleanup(item);
+                if (data.ok) item.success(data.result);
+                else item.failure({ message: data.error || 'Error de comunicación con Google Apps Script.' });
             });
-
-            function callRemote(fn, args, success, failure) {
-                const item = {
-                    id: 'pulpas_' + (++sequence),
-                    fn: fn,
-                    args: args || [],
-                    success: typeof success === 'function' ? success : function () {},
-                    failure: typeof failure === 'function' ? failure : function () {}
-                };
-                queue.push(item);
-                ensureBridgeFrame();
-                sendQueuedCalls();
-            }
 
             function makeRunner() {
                 let successHandler = function () {};
@@ -157,8 +164,7 @@
                         if (prop in target) return target[prop];
                         if (typeof prop !== 'string') return target[prop];
                         return function () {
-                            const args = Array.prototype.slice.call(arguments);
-                            callRemote(prop, args, successHandler, failureHandler);
+                            callRemote(prop, Array.prototype.slice.call(arguments), successHandler, failureHandler);
                             return runner;
                         };
                     }
@@ -168,7 +174,6 @@
             window.google = window.google || {};
             window.google.script = window.google.script || {};
             window.google.script.run = makeRunner();
-            ensureBridgeFrame();
         })();
     </script>
 
