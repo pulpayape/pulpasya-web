@@ -1,24 +1,1452 @@
-<!doctype html>
-<html lang="es">
+<!DOCTYPE html>
+<html lang="es" class="dark scroll-smooth">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pulpas Ya</title>
-  <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src https://script.google.com; style-src 'unsafe-inline'; base-uri 'none'; object-src 'none'; form-action 'none'; upgrade-insecure-requests;">
-  <style>
-    html, body, iframe { width:100%; height:100%; margin:0; padding:0; border:0; }
-    html, body { overflow:hidden; background:#050507; }
-    iframe { display:block; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulpas Ya | B2B Immersive Engine & CMS</title>
+    
+    <!-- ARRANQUE ROBUSTO: la landing pública nunca se oculta esperando JavaScript. -->
+    <style id="pulpas-boot-gate">
+        body { opacity: 1 !important; transition: opacity .25s ease; }
+    </style>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        amber: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        },
+                        obsidian: '#050507'
+                    },
+                    fontFamily: {
+                        cinzel: ['Cinzel', 'serif'],
+                        inter: ['Inter', 'sans-serif'],
+                        montserrat: ['Montserrat', 'sans-serif'],
+                        playfair: ['Playfair Display', 'serif'],
+                        poppins: ['Poppins', 'sans-serif'],
+                        space: ['Space Grotesk', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@300;400;600;800&family=Montserrat:wght@400;700;900&family=Playfair+Display:ital,wght@0,700;1,400&family=Poppins:wght@300;400;600;700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Three.js & GSAP for 3D & Cognitive Scroll FX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #050507;
+            color: #f4f4f5;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        /* Glassmorphism card utility */
+        .glass-card {
+            background: rgba(20, 20, 24, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-sidebar {
+            background: rgba(12, 12, 15, 0.98);
+            backdrop-filter: blur(30px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050507;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f59e0b;
+        }
+
+        /* Smooth tab transition */
+        .tab-content {
+            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #three-canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .cognitive-section {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ================================================================
+           CUADRO DE DEGUSTACIÓN / CAPTURA Y SEGUIMIENTO
+           ================================================================ */
+        #cuadro-degustacion .deg-panel {
+            position: relative;
+            overflow: hidden;
+        }
+        #cuadro-degustacion .deg-panel::after {
+            content: '';
+            position: absolute;
+            width: 360px;
+            height: 360px;
+            border-radius: 50%;
+            right: -170px;
+            top: -180px;
+            background: rgba(242, 140, 40, .13);
+            pointer-events: none;
+        }
+        #cuadro-degustacion .deg-form {
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 20px 50px rgba(0,0,0,.12);
+        }
+        #cuadro-degustacion .deg-field {
+            transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+        }
+        #cuadro-degustacion .deg-field:focus {
+            transform: translateY(-1px);
+            outline: none;
+        }
+        /* ================================================================
+           CUADRO: BANNER SUPERIOR / NAVEGACIÓN
+           ================================================================ */
+        #banner-sup-nav {
+            min-width: 0;
+        }
+        .banner-sup-item {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            padding: .45rem .55rem;
+            border-radius: .7rem;
+            line-height: 1.1;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color .2s ease, background-color .2s ease, transform .2s ease;
+        }
+        .banner-sup-item:hover {
+            background: rgba(23, 83, 60, .06);
+            transform: translateY(-1px);
+        }
+        @media (max-width: 767px) {
+            #rendered-header {
+                gap: .6rem;
+            }
+        }
+
+        #leads-table-wrap {
+            overflow-x: auto;
+        }
+        .py-lead-row td {
+            vertical-align: top;
+        }
+        /* Noise texture overlay for immersive tactile feel */
+        .tactile-noise {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+        }
+
+        /* ================================================================
+           CMS ABIERTO: el landing real no cambia de ancho ni de origen.
+           El panel/editor está por encima como overlay.
+           ================================================================ */
+        #main-container-bg {
+            width: 100%;
+            margin-left: 0;
+            max-width: 100%;
+        }
+        @media (max-width: 767px) {
+            html, body { max-width: 100%; overflow-x: hidden !important; }
+        }
+    
+
+        /* ================================================================
+           EDITOR VISUAL V9 — CANVA-LIKE WORKBENCH ISOLATED
+           El landing real NO se redimensiona al abrir el editor.
+        ================================================================ */
+        #visual-workbench-modal {
+            position: fixed; inset: 0; z-index: 2147483000; display:none;
+            background: rgba(5,5,7,.96); color:#fff;
+        }
+        #visual-workbench-modal.is-open { display:flex; }
+        .visual-wb-sidebar {
+            width: 390px; max-width: 42vw; flex:0 0 390px; background:#0d0d10;
+            border-right:1px solid #24242a; display:flex; flex-direction:column; min-width:0;
+        }
+        .visual-wb-top {
+            height:62px; flex:0 0 62px; background:#0b0b0d; border-bottom:1px solid #24242a;
+            display:flex; align-items:center; gap:8px; padding:0 12px;
+        }
+        .visual-wb-stage {
+            flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden;
+            background-color:#101014;
+            background-image: linear-gradient(45deg,#141418 25%,transparent 25%),linear-gradient(-45deg,#141418 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#141418 75%),linear-gradient(-45deg,transparent 75%,#141418 75%);
+            background-size:28px 28px; background-position:0 0,0 14px,14px -14px,-14px 0;
+        }
+        .visual-wb-toolbar {
+            height:62px; flex:0 0 62px; display:flex; align-items:center; gap:8px; padding:0 14px;
+            background:#0b0b0d; border-bottom:1px solid #24242a; white-space:nowrap;
+        }
+        .visual-wb-toolbar .wb-label { font-weight:900; color:#f59e0b; letter-spacing:.04em; margin-right:4px; }
+        .wb-btn {
+            border:1px solid #2b2b32; background:#17171b; color:#fff; border-radius:10px; padding:9px 12px;
+            font:700 11px Poppins,sans-serif; cursor:pointer; transition:.15s ease;
+        }
+        .wb-btn:hover { background:#24242a; }
+        .wb-btn.active { background:#f59e0b; border-color:#f59e0b; color:#050507; }
+        .wb-btn.primary { background:#f59e0b; border-color:#f59e0b; color:#050507; }
+        .wb-btn.danger { background:#1a1111; border-color:#402020; color:#fca5a5; }
+        #visual-wb-scroll { flex:1; min-height:0; overflow:auto; position:relative; padding:30px; }
+        #visual-wb-page-wrap { position:relative; margin:0 auto; transform-origin:top left; width:max-content; }
+        #visual-wb-page { position:relative; background:#fff; overflow:visible; box-shadow:0 20px 70px rgba(0,0,0,.45); }
+        #visual-wb-page .sticky { position:relative !important; top:auto !important; }
+        #visual-wb-page * { transition:none !important; animation:none !important; }
+        #visual-wb-page a, #visual-wb-page button, #visual-wb-page input, #visual-wb-page select, #visual-wb-page textarea { cursor:default !important; }
+        .visual-wb-guide-v, .visual-wb-guide-h {
+            position:absolute; background:#60a5fa; z-index:9999999; pointer-events:none; display:none;
+        }
+        .visual-wb-guide-v { top:0; bottom:0; width:1px; }
+        .visual-wb-guide-h { left:0; right:0; height:1px; }
+        #visual-wb-selection {
+            position:absolute; z-index:10000000; border:2px solid #f59e0b; box-sizing:border-box; display:none; pointer-events:none;
+        }
+        #visual-wb-selection.visible { display:block; }
+        #visual-wb-selection .vw-h {
+            position:absolute; width:10px; height:10px; background:#f59e0b; border:2px solid #fff; border-radius:2px;
+            box-sizing:border-box; pointer-events:auto;
+        }
+        #visual-wb-selection .vw-se { right:-7px; bottom:-7px; cursor:nwse-resize; }
+        #visual-wb-selection .vw-ne { right:-7px; top:-7px; cursor:nesw-resize; }
+        #visual-wb-selection .vw-sw { left:-7px; bottom:-7px; cursor:nesw-resize; }
+        #visual-wb-selection .vw-nw { left:-7px; top:-7px; cursor:nwse-resize; }
+        #visual-wb-selection .vw-e { right:-7px; top:50%; cursor:ew-resize; }
+        #visual-wb-selection .vw-w { left:-7px; top:50%; cursor:ew-resize; }
+        #visual-wb-selection .vw-n { left:50%; top:-7px; cursor:ns-resize; }
+        #visual-wb-selection .vw-s { left:50%; bottom:-7px; cursor:ns-resize; }
+        #visual-wb-selection .vw-rot {
+            left:50%; top:-37px; width:14px; height:14px; border-radius:50%; background:#60a5fa; cursor:grab; transform:translateX(-50%);
+        }
+        .visual-wb-side-content { flex:1; min-height:0; overflow:auto; padding:14px; }
+        .visual-wb-section { border:1px solid #24242a; border-radius:12px; background:#111114; padding:12px; margin-bottom:12px; }
+        .visual-wb-section h4 { margin:0 0 10px; font-size:11px; color:#fbbf24; text-transform:uppercase; letter-spacing:.08em; }
+        .visual-wb-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .visual-wb-field { margin-bottom:9px; }
+        .visual-wb-field label { display:block; color:#a1a1aa; font-size:10px; margin-bottom:4px; }
+        .visual-wb-field input, .visual-wb-field textarea, .visual-wb-field select {
+            width:100%; box-sizing:border-box; background:#18181c; color:#fff; border:1px solid #2b2b32; border-radius:9px; padding:8px 9px; font:500 11px Poppins,sans-serif; outline:none;
+        }
+        .visual-wb-field textarea { min-height:74px; resize:vertical; }
+        .visual-wb-field input[type="color"] { height:36px; padding:3px; }
+        .visual-wb-info { color:#71717a; font-size:10px; line-height:1.5; }
+        .visual-wb-pill { display:inline-flex; padding:5px 8px; border:1px solid #2b2b32; border-radius:999px; color:#a1a1aa; font-size:9px; margin:2px; }
+        .visual-wb-nav { display:grid; grid-template-columns:1fr; gap:6px; }
+        .visual-wb-nav select { width:100%; background:#18181c; color:#fff; border:1px solid #2b2b32; border-radius:9px; padding:8px; font-size:10px; }
+        .visual-wb-status { padding:8px 12px; border-top:1px solid #24242a; font-size:10px; color:#71717a; background:#0b0b0d; }
+        .visual-free-layer { position:absolute !important; inset:0 !important; z-index:60; pointer-events:none; }
+        .visual-free-object { position:absolute; box-sizing:border-box; pointer-events:auto; }
+        body.visual-editor-v9-session-open { overflow:hidden !important; }
+        @media(max-width:900px){ .visual-wb-sidebar{width:330px;flex-basis:330px;} }
+
+    
+        /* V13: objetos nuevos integrados dentro de su sección real. */
+        .ve9-public-layer{position:absolute !important;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:70;}
+        .ve9-public-object{position:absolute;box-sizing:border-box;max-width:100%;}        
+        .ve9-editor-layer{position:absolute !important;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:100000;}
+        .ve9-editor-layer .visual-free-object{pointer-events:auto;cursor:move;}
+        body.visual-editor-v11-open{overflow:hidden !important;}
+        html, body, #main-container-bg { max-width:100%; }
+        @media(max-width:767px){
+            html,body{width:100%;max-width:100%;overflow-x:hidden !important;}
+            #main-container-bg{width:100% !important;max-width:100% !important;min-width:0 !important;overflow-x:clip;}
+            #main-container-bg > section, #main-container-bg > header, #main-container-bg > footer{width:100%;max-width:100%;min-width:0;overflow-x:clip;}
+            #main-container-bg img, #main-container-bg video, #main-container-bg canvas{max-width:100%;}
+            #rendered-header{width:100%;max-width:100%;}
+            .ve9-public-layer{left:0 !important;width:100% !important;max-width:100% !important;}
+            .ve9-public-object{box-sizing:border-box;max-width:calc(100% - 8px);}
+            .ve9-public-object img{max-width:100%;height:100%;}
+        }
+        html,body{width:100%;max-width:100%;}
+</style>
 </head>
-<body>
-  <iframe
-    src="https://script.google.com/macros/s/AKfycbyAgxQ3kP3EveCqC4UrLpCFn5EmZQPI0XLkjKlt1eMpduHs8SEpit6-in2Np3AZWYzWjQ/exec?view=client"
-    title="Pulpas Ya"
-    referrerpolicy="no-referrer"
-    loading="eager"
-    allow="fullscreen"
-  ></iframe>
-</body>
-</html>
+<body class="min-h-screen w-screen flex flex-col bg-[#050507] text-zinc-100 antialiased selection:bg-amber-500 selection:text-black tactile-noise">
+
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ADMIN LOGIN MODAL -->
+    <div id="admin-login-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-sm w-full p-8 rounded-3xl border border-zinc-800 space-y-6 animate-fadeIn shadow-2xl">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500 text-black flex items-center justify-center font-bold">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    </div>
+                    <h3 class="font-bold text-white text-sm">Acceso CMS Admin</h3>
+                </div>
+                <button onclick="closeAdminLoginModal()" class="text-zinc-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3.5 text-xs">
+                <div>
+                    <label class="text-zinc-300 font-semibold block mb-1">Contraseña de Administrador:</label>
+                    <input type="password" id="admin-password-input" onkeydown="if(event.key==='Enter')verifyAdminPassword()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-white outline-none focus:border-amber-500 transition text-center tracking-widest font-mono text-sm" placeholder="••••••">
+                </div>
+                <p id="admin-login-error" class="text-[11px] text-red-400 text-center hidden font-medium">Contraseña incorrecta. Intente nuevamente.</p>
+            </div>
+
+            <button onclick="verifyAdminPassword()" class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-black font-extrabold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:scale-[1.02]">
+                <i data-lucide="key" class="w-4 h-4"></i> Desplegar Panel CMS
+            </button>
+        </div>
+    </div>
+
+    <!-- 3D IMMERSIVE BACKGROUND CANVAS CONTAINER -->
+    <div id="three-canvas-container">
+        <canvas id="three-canvas" class="w-full h-full"></canvas>
+    </div>
+
+    <aside id="cms-sidebar" class="w-full sm:w-[440px] glass-sidebar flex-shrink-0 flex flex-col h-screen fixed top-0 left-0 z-40 border-r border-zinc-800 shadow-2xl transition-transform duration-300 -translate-x-full">
+        
+        <!-- Sidebar Header -->
+        <div class="p-5 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-950/90">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center font-black text-black shadow-lg shadow-amber-500/30">
+                    <i data-lucide="sliders" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-xs tracking-wider text-white uppercase font-space">PANEL DE EDICION</h1>
+                    <p class="text-[10px] text-amber-400/80 font-medium">Motor 3D & Estética Cognitiva</p>
+                </div>
+            </div>
+            <button onclick="toggleSidebar()" class="p-2 rounded-lg bg-zinc-800 text-zinc-300 hover:text-white transition">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- Sidebar Navigation Tabs -->
+        <div class="flex border-b border-zinc-800 bg-zinc-950/90 text-[11px] font-medium text-zinc-400 overflow-x-auto">
+            <button onclick="switchTab('design')" id="tab-btn-design" class="flex-1 py-3 px-2 border-b-2 border-amber-500 text-amber-500 font-bold flex justify-center items-center gap-1.5 whitespace-nowrap transition">
+                <i data-lucide="palette" class="w-3.5 h-3.5"></i> Diseño
+            </button>
+            <button onclick="switchTab('banner-sup')" id="tab-btn-banner-sup" class="flex-1 py-3 px-2 border-b-2 border-transparent hover:text-white flex justify-center items-center gap-1.5 whitespace-nowrap transition">
+                <i data-lucide="menu" class="w-3.5 h-3.5"></i> Banner Sup.
+            </button>
+            <button onclick="switchTab('content')" id="tab-btn-content" class="flex-1 py-3 px-2 border-b-2 border-transparent hover:text-white flex justify-center items-center gap-1.5 whitespace-nowrap transition">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Marca
+            </button>
+            <button onclick="switchTab('align')" id="tab-btn-align" class="flex-1 py-3 px-2 border-b-2 border-transparent hover:text-white flex justify-center items-center gap-1.5 whitespace-nowrap transition">
+                <i data-lucide="align-left" class="w-3.5 h-3.5"></i> Alineación
+            </button>
+            <button onclick="switchTab('3d')" id="tab-btn-3d" class="flex-1 py-3 px-2 border-b-2 border-transparent hover:text-white flex justify-center items-center gap-1.5 whitespace-nowrap transition">
+                <i data-lucide="box" class="w-3.5 h-3.5"></i> Motor 3D
+            </button>
+            <button onclick="switchTab('catalog')" id="tab-btn-catalog" class="flex-1 py-3 px-2 border-b-2 border-transparent hover:text-white flex justify-center items-center gap-1.5 whitespace-nowrap transition">
+                <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i> Catálogo
+            </button>
+            <button onclick="switchTab('allies')" id="tab-btn-allies" class="flex-1 py-3 px-2 border-b-2 border-transparent hover:text-white flex justify-center items-center gap-1.5 whitespace-nowrap transition">
+                <i data-lucide="handshake" class="w-3.5 h-3.5"></i> Alianzas
+            </button>
+            <button onclick="switchTab('leads')" id="tab-btn-leads" class="flex-1 py-3 px-2 border-b-2 border-transparent hover:text-white flex justify-center items-center gap-1.5 whitespace-nowrap transition">
+                <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i> Degustaciones
+            </button>
+            <button onclick="switchTab('visual')" id="tab-btn-visual" class="flex-1 py-3 px-2 border-b-2 border-transparent hover:text-white flex justify-center items-center gap-1.5 whitespace-nowrap transition">
+                <i data-lucide="mouse-pointer-2" class="w-3.5 h-3.5"></i> Editor visual
+            </button>
+        </div>
+
+        <!-- Sidebar Body Content -->
+        <div class="flex-1 overflow-y-auto p-5 space-y-6 text-sm">
+            
+            <!-- TAB 1: DISEÑO Y COLORES INTEGRALES (ABSOLUTO) -->
+            <div id="tab-content-design" class="tab-content space-y-5">
+                <h3 class="text-xs font-extrabold text-amber-400 uppercase tracking-widest">Paleta de Colores y Estética Integral</h3>
+                <p class="text-[11px] text-zinc-400">Personaliza absolutamente cada color de la plataforma para adaptar la identidad visual a tu marca.</p>
+
+                <div class="space-y-4 pt-2">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Fondo General Web</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-bg-general" onchange="updateColor('bgGeneral', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-bg-general">#050507</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Barra Superior (Header)</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-header-bg" onchange="updateColor('headerBg', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-header-bg">#141418</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Texto Barra Superior</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-header-text" onchange="updateColor('headerText', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-header-text">#ffffff</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Color de Marca</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-brand" onchange="updateColor('accentColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-brand">#f59e0b</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Color de Slogan Hero</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-hero-slogan" onchange="updateColor('heroSloganColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-hero-slogan">#fbbf24</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Texto "Concentrado B2B..."</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-hero-badge-text" onchange="updateColor('heroBadgeTextColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-hero-badge-text">#fbbf24</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Título Principal Hero</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-hero-title" onchange="updateColor('heroTitleColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-hero-title">#ffffff</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Texto Secundario Hero</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-hero-sub" onchange="updateColor('heroSubColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-hero-sub">#d4d4d8</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Fondo Botones Web</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-btn-bg" onchange="updateColor('btnBgColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-btn-bg">#f59e0b</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Fondo Tarjeta Producto</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-card-bg" onchange="updateColor('cardBgColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-card-bg">#18181b</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Borde Tarjeta Producto</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-card-border" onchange="updateColor('cardBorderColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-card-border">#27272a</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Texto Tarjetas Producto</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-card-text" onchange="updateColor('cardTextColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-card-text">#ffffff</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-zinc-300">Texto Presentación Catálogo</label>
+                        <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                            <input type="color" id="col-catalog-title" onchange="updateColor('catalogTitleColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                            <span class="text-xs text-zinc-300 font-mono" id="val-catalog-title">#ffffff</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colores por sección (se genera con buildSectionColorControls) -->
+                <div id="section-colors-container" class="space-y-4 pt-4 border-t border-zinc-800"></div>
+
+
+                <!-- CUADRO DE DEGUSTACIÓN: CONTROLES ESPECÍFICOS -->
+                <div class="space-y-4 pt-4 border-t border-zinc-800">
+                    <div>
+                        <h3 class="text-xs font-extrabold text-amber-400 uppercase tracking-widest">Cuadro de Degustación</h3>
+                        <p class="text-[11px] text-zinc-400 mt-1">Control independiente del fondo de la sección, panel principal, formulario, textos, campos y botón.</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Fondo exterior</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-deg-bg" onchange="updateColor('degBgColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-deg-bg"></span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Fondo cuadro principal</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-deg-panel" onchange="updateColor('degPanelBgColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-deg-panel"></span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Fondo formulario</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-deg-form" onchange="updateColor('degFormBgColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-deg-form"></span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Borde formulario</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-deg-border" onchange="updateColor('degFormBorderColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-deg-border"></span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Color título</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-deg-title" onchange="updateColor('degTitleColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-deg-title"></span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Color subtítulo</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-deg-subtitle" onchange="updateColor('degSubtitleColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-deg-subtitle"></span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Color textos</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-deg-text" onchange="updateColor('degTextColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-deg-text"></span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Color etiquetas</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-deg-label" onchange="updateColor('degLabelColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-deg-label"></span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Fondo campos</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-deg-input-bg" onchange="updateColor('degInputBgColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-deg-input-bg"></span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Texto campos</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-deg-input-text" onchange="updateColor('degInputTextColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-deg-input-text"></span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Borde campos</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-deg-input-border" onchange="updateColor('degInputBorderColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-deg-input-border"></span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Fondo botón</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-deg-btn" onchange="updateColor('degButtonBgColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-deg-btn"></span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-300">Texto botón</label>
+                            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                                <input type="color" id="col-deg-btn-text" onchange="updateColor('degButtonTextColor', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                                <span class="text-xs text-zinc-300 font-mono" id="val-deg-btn-text"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-2">
+                        <div class="space-y-1.5">
+                            <label class="text-[11px] font-semibold text-zinc-300">Tamaño título (<span id="val-deg-title-size">44</span>px)</label>
+                            <input type="range" id="range-deg-title-size" min="28" max="64" step="1" oninput="updateConfig('degTitleSize', parseInt(this.value) || 44)" class="w-full accent-amber-500 bg-zinc-800 rounded-lg">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[11px] font-semibold text-zinc-300">Tamaño texto (<span id="val-deg-text-size">14</span>px)</label>
+                            <input type="range" id="range-deg-text-size" min="11" max="20" step="1" oninput="updateConfig('degTextSize', parseInt(this.value) || 14)" class="w-full accent-amber-500 bg-zinc-800 rounded-lg">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: BANNER SUPERIOR / NAVEGACIÓN -->
+            <div id="tab-content-banner-sup" class="tab-content space-y-5 hidden">
+                <div>
+                    <h3 class="text-xs font-extrabold text-amber-400 uppercase tracking-widest">Banner Sup.</h3>
+                    <p class="text-[11px] text-zinc-400 mt-1">Edita cada botón del banner superior: texto, color, tamaño, tipografía y cuadro de destino.</p>
+                </div>
+
+                <div class="space-y-3 p-3 rounded-2xl border border-zinc-800 bg-zinc-950/60">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-zinc-300">Fondo del banner</label>
+                        <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                            <input type="color" id="col-banner-sup-bg" onchange="updateColor('headerBg', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                            <span class="text-xs text-zinc-300 font-mono" id="val-banner-sup-bg">#f8f7f1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="banner-sup-editor" class="space-y-4"></div>
+            </div>
+
+            <!-- TAB 2: MARCA Y CONTENIDO -->
+            <div id="tab-content-content" class="tab-content space-y-5 hidden">
+                
+                <!-- Logo Customizer -->
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-amber-400 uppercase tracking-wider block">Logo de Marca B2B</label>
+                    <div class="flex items-center gap-3 bg-zinc-900/90 p-3 rounded-2xl border border-zinc-800">
+                        <div id="logo-preview-box" class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <span id="logo-preview-text" class="font-black text-amber-400 text-xl">P</span>
+                        </div>
+                        <div class="flex-1 space-y-1">
+                            <label class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold rounded-xl cursor-pointer inline-flex items-center gap-1.5 transition shadow">
+                                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Subir Imagen
+                                <input type="file" accept="image/*" onchange="handleLogoUpload(event)" class="hidden">
+                            </label>
+                            <button onclick="resetLogo()" class="text-[11px] text-zinc-400 hover:text-red-400 block underline">Restaurar Texto</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Brand Name -->
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-zinc-300">Nombre Comercial</label>
+                    <input type="text" id="input-brand-name" oninput="updateConfig('brandName', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white text-xs outline-none focus:border-amber-500 transition">
+                </div>
+
+                <!-- Typography Selection -->
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-zinc-300">Tipografía de Títulos B2B</label>
+                    <select id="select-heading-font" onchange="updateConfig('headingFont', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white text-xs outline-none focus:border-amber-500 transition">
+                        <option value="Poppins">Poppins (Moderna & Versátil)</option>
+                        <option value="Montserrat">Montserrat (Impacto B2B)</option>
+                        <option value="Inter">Inter (Limpia & Minimalista)</option>
+                        <option value="Playfair Display">Playfair Display (Gourmet / Elegante)</option>
+                        <option value="Space Grotesk">Space Grotesk (Tecnológica / Fina)</option>
+                        <option value="Cinzel">Cinzel (Lujo / Premium)</option>
+                    </select>
+                </div>
+
+                <!-- Hero Section Texts -->
+                <div class="pt-3 space-y-3 border-t border-zinc-800">
+                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Contenido Hero Immersivo</h3>
+                    
+                    <div class="space-y-1.5">
+                        <label class="text-[11px] text-zinc-400">Badge Superior</label>
+                        <input type="text" id="input-hero-badge" oninput="updateConfig('heroBadge', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-amber-500">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-[11px] text-zinc-400">Título Principal</label>
+                        <textarea id="input-hero-title" oninput="updateConfig('heroTitle', this.value)" rows="2" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-amber-500 resize-none"></textarea>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-[11px] text-zinc-400">Subtítulo Explicativo</label>
+                        <textarea id="input-hero-sub" oninput="updateConfig('heroSub', this.value)" rows="3" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-amber-500 resize-none"></textarea>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-[11px] text-zinc-400">Tamaño Fuente Título (<span id="val-hero-size">48</span>px)</label>
+                        <input type="range" id="range-hero-size" min="28" max="72" oninput="updateConfig('heroFontSize', this.value)" class="w-full accent-amber-500 bg-zinc-800 rounded-lg">
+                    </div>
+                </div>
+
+                <!-- CUADRO DE DEGUSTACIÓN: CONTENIDO EDITABLE -->
+                <div class="pt-3 border-t border-zinc-800 space-y-3">
+                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Contenido Cuadro de Degustación</h3>
+                    <div class="space-y-1.5"><label class="text-[11px] text-zinc-400">Etiqueta superior</label><input id="input-deg-eyebrow" type="text" oninput="updateConfig('degEyebrow', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-amber-500"></div>
+                    <div class="space-y-1.5"><label class="text-[11px] text-zinc-400">Título</label><textarea id="input-deg-title" rows="3" oninput="updateConfig('degTitle', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-amber-500 resize-none"></textarea></div>
+                    <div class="space-y-1.5"><label class="text-[11px] text-zinc-400">Subtítulo</label><textarea id="input-deg-subtitle" rows="4" oninput="updateConfig('degSubtitle', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-amber-500 resize-none"></textarea></div>
+                    <div class="space-y-1.5"><label class="text-[11px] text-zinc-400">Texto del botón</label><input id="input-deg-button" type="text" oninput="updateConfig('degButtonLabel', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-amber-500"></div>
+                    <div class="space-y-1.5"><label class="text-[11px] text-zinc-400">Nota bajo botón</label><input id="input-deg-note" type="text" oninput="updateConfig('degNote', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-amber-500"></div>
+                </div>
+
+                <!-- Contact & WhatsApp -->
+                <div class="pt-3 border-t border-zinc-800 space-y-2">
+                    <label class="text-xs font-bold text-amber-400 uppercase tracking-wider block">Número WhatsApp B2B</label>
+                    <input type="text" id="input-whatsapp" oninput="updateConfig('whatsapp', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white text-xs outline-none focus:border-amber-500" placeholder="51999888777">
+                </div>
+
+            </div>
+
+            <!-- TAB 3: ALINEACIÓN Y MAQUETACIÓN -->
+            <div id="tab-content-align" class="tab-content space-y-5 hidden">
+                <div class="space-y-2">
+                    <h3 class="text-xs font-extrabold text-amber-400 uppercase tracking-widest">Alineación Sección Hero</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="updateAlignment('heroAlign', 'left')" class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col items-center gap-1 hover:border-amber-500 transition">
+                            <i data-lucide="align-left" class="w-4 h-4"></i>
+                            <span class="text-[10px]">Izquierda</span>
+                        </button>
+                        <button onclick="updateAlignment('heroAlign', 'center')" class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col items-center gap-1 hover:border-amber-500 transition">
+                            <i data-lucide="align-center" class="w-4 h-4"></i>
+                            <span class="text-[10px]">Centro</span>
+                        </button>
+                        <button onclick="updateAlignment('heroAlign', 'right')" class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col items-center gap-1 hover:border-amber-500 transition">
+                            <i data-lucide="align-right" class="w-4 h-4"></i>
+                            <span class="text-[10px]">Derecha</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-3 border-t border-zinc-800">
+                    <h3 class="text-xs font-extrabold text-amber-400 uppercase tracking-widest">Alineación Diagnóstico B2B</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="updateAlignment('diagAlign', 'left')" class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col items-center gap-1 hover:border-amber-500 transition">
+                            <i data-lucide="align-left" class="w-4 h-4"></i>
+                            <span class="text-[10px]">Izquierda</span>
+                        </button>
+                        <button onclick="updateAlignment('diagAlign', 'center')" class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col items-center gap-1 hover:border-amber-500 transition">
+                            <i data-lucide="align-center" class="w-4 h-4"></i>
+                            <span class="text-[10px]">Centro</span>
+                        </button>
+                        <button onclick="updateAlignment('diagAlign', 'right')" class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col items-center gap-1 hover:border-amber-500 transition">
+                            <i data-lucide="align-right" class="w-4 h-4"></i>
+                            <span class="text-[10px]">Derecha</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-3 border-t border-zinc-800">
+                    <h3 class="text-xs font-extrabold text-amber-400 uppercase tracking-widest">Alineación Título Catálogo</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="updateAlignment('catalogAlign', 'left')" class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col items-center gap-1 hover:border-amber-500 transition">
+                            <i data-lucide="align-left" class="w-4 h-4"></i>
+                            <span class="text-[10px]">Izquierda</span>
+                        </button>
+                        <button onclick="updateAlignment('catalogAlign', 'center')" class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col items-center gap-1 hover:border-amber-500 transition">
+                            <i data-lucide="align-center" class="w-4 h-4"></i>
+                            <span class="text-[10px]">Centro</span>
+                        </button>
+                        <button onclick="updateAlignment('catalogAlign', 'right')" class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col items-center gap-1 hover:border-amber-500 transition">
+                            <i data-lucide="align-right" class="w-4 h-4"></i>
+                            <span class="text-[10px]">Derecha</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: MOTOR 3D INTERACTIVO -->
+            <div id="tab-content-3d" class="tab-content space-y-5 hidden">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-bold text-amber-400 uppercase tracking-wider block">Modelo Geométrico 3D Immersivo</label>
+                    <select id="select-3d-model" onchange="update3DEngine('model3d', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white text-xs outline-none focus:border-amber-500">
+                        <option value="fruit">Fruta Orgánica / Esfera Pulsante</option>
+                        <option value="bottle">Botella de Concentrado B2B / Cilindro</option>
+                        <option value="drops">Gotas de Pulpa / Nube de Fruta</option>
+                        <option value="glass">Vaso de Cóctel / Cono Invertido</option>
+                        <option value="ice">Cubos de Hielo / Cristales</option>
+                    </select>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-zinc-300">Color del Objeto 3D</label>
+                    <div class="flex items-center gap-2 bg-zinc-900 p-2.5 rounded-xl border border-zinc-800">
+                        <input type="color" id="input-3d-color" onchange="update3DEngine('color3d', this.value)" class="w-7 h-7 rounded-lg bg-transparent cursor-pointer border-0">
+                        <span class="text-xs text-zinc-300 font-mono" id="val-3d-color">#f59e0b</span>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-zinc-300">Velocidad de Rotación (<span id="val-3d-speed">1.0</span>x)</label>
+                    <input type="range" id="range-3d-speed" min="0.1" max="3" step="0.1" oninput="update3DEngine('speed3d', parseFloat(this.value))" class="w-full accent-amber-500 bg-zinc-800 rounded-lg">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-zinc-300">Cantidad de Partículas de Pulpa (<span id="val-3d-particles">1200</span>)</label>
+                    <input type="range" id="range-3d-particles" min="300" max="3000" step="100" onchange="update3DEngine('particles3d', parseInt(this.value))" class="w-full accent-amber-500 bg-zinc-800 rounded-lg">
+                </div>
+
+                <div class="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-300 leading-relaxed">
+                    <i data-lucide="sparkles" class="w-4 h-4 inline mr-1 text-amber-400"></i>
+                    El motor 3D interactúa dinámicamente con el desplazamiento (scroll), creando una transición cognitiva inmersiva en cada sección.
+                </div>
+            </div>
+
+            <!-- TAB 5: GESTOR DE CATÁLOGO Y YIELD -->
+            <div id="tab-content-catalog" class="tab-content space-y-6 hidden">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <h3 class="text-xs font-extrabold text-amber-400 uppercase tracking-widest">Gestor de Catálogo B2B</h3>
+                    <button onclick="addNewProduct()" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black rounded-xl text-xs font-bold transition flex items-center gap-1 shadow">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Añadir Producto
+                    </button>
+                </div>
+
+                <div id="catalog-items-editor" class="space-y-4"></div>
+            </div>
+
+            <!-- TAB 6: GESTOR DE ALIANZAS Y MARCAS ALIADAS -->
+            <div id="tab-content-allies" class="tab-content space-y-6 hidden">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <h3 class="text-xs font-extrabold text-amber-400 uppercase tracking-widest">Gestor de Alianzas</h3>
+                    <button onclick="addNewAlly()" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black rounded-xl text-xs font-bold transition flex items-center gap-1 shadow">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Añadir Aliado
+                    </button>
+                </div>
+
+                <div id="allies-items-editor" class="space-y-4"></div>
+            </div>
+
+            <!-- TAB 8: EDITOR VISUAL CANVA -->
+            <div id="tab-content-visual" class="tab-content space-y-5 hidden">
+                <div>
+                    <h3 class="text-xs font-extrabold text-amber-400 uppercase tracking-widest">Mesa de trabajo visual</h3>
+                    <p class="text-[11px] text-zinc-400 mt-1">La página real no cambia de tamaño mientras editas. La mesa de trabajo es independiente y reproduce el viewport del dispositivo.</p>
+                </div>
+                <button type="button" onclick="ve9Open()" class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-black font-extrabold rounded-xl text-xs flex items-center justify-center gap-2">
+                    <i data-lucide="layout-template" class="w-4 h-4"></i> Abrir mesa de trabajo
+                </button>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="ve9Open('desktop')" class="px-2 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-[10px] font-bold">PC</button>
+                    <button type="button" onclick="ve9Open('tablet')" class="px-2 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-[10px] font-bold">Tablet</button>
+                    <button type="button" onclick="ve9Open('mobile')" class="px-2 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-[10px] font-bold">Móvil</button>
+                </div>
+                <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-300 leading-relaxed">
+                    El diseño guardado de cada dispositivo se mantiene separado. Tablet y Móvil heredan de PC hasta que realices una modificación específica en ese dispositivo.
+                </div>
+            </div>
+
+            <!-- TAB 7: SEGUIMIENTO DE DEGUSTACIONES -->
+            <div id="tab-content-leads" class="tab-content space-y-5 hidden">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-3 gap-3">
+                    <div>
+                        <h3 class="text-xs font-extrabold text-amber-400 uppercase tracking-widest">Seguimiento de Degustaciones</h3>
+                        <p class="text-[10px] text-zinc-500 mt-1">Registros enviados desde el cuadro de degustación y sincronizados con Google Sheets.</p>
+                    </div>
+                    <button onclick="loadLeads(true)" class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-[11px] font-bold flex items-center gap-1.5">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Actualizar
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 text-[10px] text-zinc-400">
+                    <span class="px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300">Nuevo</span>
+                    <span class="px-2 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300">Contactado</span>
+                    <span class="px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">Coordinada</span>
+                    <span class="px-2 py-1 rounded-lg bg-zinc-800 text-zinc-300">Cerrado</span>
+                </div>
+                <div id="leads-status-msg" class="text-[11px] text-zinc-500">Inicia sesión como admin para cargar los registros.</div>
+                <div id="leads-table-wrap" class="rounded-2xl border border-zinc-800 bg-zinc-950/70">
+                    <div id="leads-table" class="min-w-[760px]"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-zinc-800/80 bg-zinc-950/90 flex items-center justify-between text-xs">
+            <span class="text-zinc-500">Motor 3D: <span class="text-emerald-400 font-bold">● Sincronizado</span></span>
+            <button onclick="resetDefaultConfig()" class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-[11px] transition">
+                Restablecer Todo
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 w-full min-h-screen relative overflow-y-auto flex flex-col z-10" id="main-container-bg">
+        
+        <!-- TOP NAVIGATION BAR -->
+        <header class="sticky top-0 z-30 glass-card border-b border-zinc-800/80 px-6 sm:px-12 md:px-16 py-4 flex items-center justify-between backdrop-blur-xl w-full" id="rendered-header">
+            <div class="flex items-center gap-3">
+                <div id="rendered-logo-box" class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-black text-black overflow-hidden shadow-lg shadow-amber-500/20 flex-shrink-0">
+                    <span id="rendered-logo-text-inner" class="text-xl">P</span>
+                </div>
+                <span id="rendered-logo-text" class="font-extrabold text-lg sm:text-xl text-white tracking-tight">Pulpas Ya</span>
+            </div>
+
+            <nav id="banner-sup-nav" class="hidden md:flex items-center justify-center gap-2 lg:gap-5 flex-1 mx-6" aria-label="Navegación principal">
+                <button type="button" id="banner-nav-0" class="banner-sup-item" onclick="navigateBannerSup(0)">Producto</button>
+                <button type="button" id="banner-nav-1" class="banner-sup-item" onclick="navigateBannerSup(1)">Beneficios</button>
+                <button type="button" id="banner-nav-2" class="banner-sup-item" onclick="navigateBannerSup(2)">Usos</button>
+                <button type="button" id="banner-nav-3" class="banner-sup-item" onclick="navigateBannerSup(3)">Para negocios</button>
+            </nav>
+            <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                <button onclick="openAdminLoginModal()" class="px-2.5 sm:px-3.5 py-2 bg-transparent hover:bg-zinc-100 border border-transparent hover:border-zinc-200 text-zinc-500 hover:text-zinc-800 font-semibold text-[10px] sm:text-xs rounded-xl transition flex items-center gap-1.5">
+                    <span>CMS</span>
+                </button>
+                <button onclick="goToDegustation()" class="px-4 sm:px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-[10px] sm:text-xs rounded-xl transition flex items-center gap-2 shadow-lg shadow-amber-500/20 whitespace-nowrap">
+                    Solicitar degustación <span aria-hidden="true">↗</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- SECTION 1: HERO WITH FULL-WIDTH 3D ENGINE -->
+        <section id="hero-section" class="cognitive-section relative min-h-[90vh] flex items-center justify-center px-6 sm:px-12 md:px-20 py-20 border-b border-zinc-900/60 overflow-hidden w-full">
+            <div class="relative z-10 max-w-5xl mx-auto w-full transition-all duration-300" id="hero-content-block">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-extrabold tracking-wider uppercase mb-6 backdrop-blur-md shadow-lg">
+                    <i data-lucide="sparkles" class="w-4 h-4 animate-pulse"></i>
+                    <span id="rendered-hero-badge">CONCENTRADO B2B DE ALTO RENDIMIENTO</span>
+                </div>
+
+                <h1 id="rendered-hero-title" class="text-4xl sm:text-6xl md:text-7xl font-black text-white leading-tight tracking-tight mb-6 drop-shadow-md">
+                    Optimiza el Rendimiento de tu Cocina y Barra sin Perder Sabor
+                </h1>
+
+                <p id="rendered-hero-sub" class="text-sm sm:text-lg md:text-xl text-zinc-300 max-w-3xl font-normal leading-relaxed mb-10 drop-shadow-sm">
+                    Pulpas pasteurizadas congeladas de fruta natural. Cero merma, estandarización total de acidez y preparación instantánea para restaurantes, bares y hoteles.
+                </p>
+
+                <div class="flex flex-wrap items-center gap-4">
+                    <button onclick="goToDegustation()" id="hero-main-btn" class="px-8 py-4 bg-amber-500 hover:bg-amber-400 text-black font-extrabold rounded-2xl text-sm transition flex items-center gap-3 shadow-2xl shadow-amber-500/30 hover:scale-105">
+                        <i data-lucide="shopping-cart" class="w-4 h-4"></i> QUIERO MI DEGUSTACION
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: DIAGNÓSTICO DE COSTOS Y VALOR AGREGADO -->
+        <section id="diagnostico" class="cognitive-section relative py-24 px-6 sm:px-12 md:px-20 border-b border-zinc-900/60 bg-zinc-950/60 w-full">
+            <div class="max-w-7xl mx-auto space-y-12">
+                <div class="transition-all duration-300" id="diag-header-block">
+                    <span class="text-amber-400 text-xs font-extrabold uppercase tracking-widest">¿POR QUÉ CAMBIAR A PULPA PASTEURIZADA?</span>
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-white mt-2 tracking-tight">Elimina los Dolores de Cabeza de tu Barra</h2>
+                </div>
+
+                <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
+                    <div class="glass-card p-8 rounded-3xl space-y-5 border-zinc-800/80 hover:border-amber-500/40 transition hover:-translate-y-1">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-lg">
+                            <i data-lucide="trending-down" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-extrabold text-xl text-white">0% Merma de Producto</h3>
+                        <p class="text-sm text-zinc-400 leading-relaxed">
+                            Aprovechas el 100% del peso pagado. Sin cáscaras, semillas ni fruta podrida por cambios de clima o overstock.
+                        </p>
+                    </div>
+
+                    <div class="glass-card p-8 rounded-3xl space-y-5 border-zinc-800/80 hover:border-amber-500/40 transition hover:-translate-y-1">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-lg">
+                            <i data-lucide="shield-check" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-extrabold text-xl text-white">Sabor Estándar los 365 Días</h3>
+                        <p class="text-sm text-zinc-400 leading-relaxed">
+                            Misma acidez, brix y aroma en verano o invierno. Garantiza que tus cócteles y jugos siempre sepan igual de bien.
+                        </p>
+                    </div>
+
+                    <div class="glass-card p-8 rounded-3xl space-y-5 border-zinc-800/80 hover:border-amber-500/40 transition hover:-translate-y-1 sm:col-span-2 md:col-span-1">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-lg">
+                            <i data-lucide="clock" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-extrabold text-xl text-white">Ahorro Extremo de Tiempo</h3>
+                        <p class="text-sm text-zinc-400 leading-relaxed">
+                            Pasa de 15 minutos lavando y pelando fruta a solo 30 segundos mezclando pulpa congelada con agua o licor.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: CATÁLOGO DINÁMICO DE PRODUCTOS B2B -->
+        <section id="catalogo" class="cognitive-section relative py-24 px-6 sm:px-12 md:px-20 border-b border-zinc-900/60 bg-zinc-950/80 w-full">
+            <div class="max-w-7xl mx-auto space-y-12">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 transition-all duration-300" id="catalog-header-block">
+                    <div>
+                        <span id="rendered-catalog-tag" class="text-amber-400 text-xs font-extrabold uppercase tracking-widest">NUESTRA LÍNEA DE CONCENTRADOS</span>
+                        <h2 id="rendered-catalog-title" class="text-3xl sm:text-4xl md:text-5xl font-black text-white mt-1 tracking-tight">Catálogo de Productos B2B</h2>
+                    </div>
+                    <p class="text-sm text-zinc-400 max-w-md leading-relaxed">
+                        Formatos ajustados para alto volumen en hoteles, cadenas de restaurantes y caterings profesionales.
+                    </p>
+                </div>
+
+                <!-- Product Grid Dynamic Target -->
+                <div id="rendered-catalog-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: APLICACIONES GASTRONÓMICAS -->
+        <section id="usos" class="cognitive-section relative py-24 px-6 sm:px-12 md:px-20 border-b border-zinc-900/60 bg-zinc-950/60 w-full">
+            <div class="max-w-7xl mx-auto space-y-12">
+                <div id="usos-header-block" class="text-center space-y-3">
+                    <span class="text-amber-400 text-xs font-extrabold uppercase tracking-widest">VERSATILIDAD TOTAL EN COCINA Y BARRA</span>
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">Aplicaciones Recomendadas</h2>
+                </div>
+
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="glass-card p-8 rounded-3xl space-y-4 bg-zinc-900/60 border-zinc-800 hover:border-amber-500/40 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold border border-amber-500/30">
+                            <i data-lucide="glass-water" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-lg">Jugos & Refrescos</h3>
+                        <p class="text-sm text-zinc-400 leading-relaxed">Limonadas frutadas, refrescos concentrados y agüitas de fruta frescas al instante.</p>
+                    </div>
+
+                    <div class="glass-card p-8 rounded-3xl space-y-4 bg-zinc-900/60 border-zinc-800 hover:border-amber-500/40 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold border border-amber-500/30">
+                            <i data-lucide="wine" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-lg">Coctelería de Autor</h3>
+                        <p class="text-sm text-zinc-400 leading-relaxed">Maracuyá Sour, Chilcanos frutados y mocktails con consistencia de acidez exacta.</p>
+                    </div>
+
+                    <div class="glass-card p-8 rounded-3xl space-y-4 bg-zinc-900/60 border-zinc-800 hover:border-amber-500/40 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold border border-amber-500/30">
+                            <i data-lucide="utensils" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-lg">Salsas & Gastronomía</h3>
+                        <p class="text-sm text-zinc-400 leading-relaxed">Reducciones para carnes, leche de tigre para ceviches y aliños agridulces.</p>
+                    </div>
+
+                    <div class="glass-card p-8 rounded-3xl space-y-4 bg-zinc-900/60 border-zinc-800 hover:border-amber-500/40 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold border border-amber-500/30">
+                            <i data-lucide="cake" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-lg">Repostería & Gelatería</h3>
+                        <p class="text-sm text-zinc-400 leading-relaxed">Mousse, cheesecake, coberturas de frutas y helados con brillo natural.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: NUESTROS ALIADOS -->
+        <section id="nuestros-aliados" class="cognitive-section relative py-24 px-6 sm:px-12 md:px-20 border-b border-zinc-900/60 bg-zinc-950/90 w-full">
+            <div class="max-w-7xl mx-auto space-y-12 text-center">
+                <div id="allies-header-block" class="space-y-3">
+                    <span class="text-amber-400 text-xs font-extrabold uppercase tracking-widest bg-amber-500/10 px-4 py-1.5 rounded-full border border-amber-500/20 inline-block">
+                        CONFIANZA Y TRAYECTORIA
+                    </span>
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">Nuestros Aliados</h2>
+                    <p class="text-sm md:text-base text-zinc-400 max-w-2xl mx-auto">
+                        Marcas, restaurantes y grupos gastronómicos que confían en la calidad y estandarización de Pulpa Ya.
+                    </p>
+                </div>
+
+                <!-- Allies Grid Dynamic Target -->
+                <div id="rendered-allies-grid" class="flex flex-wrap justify-center items-center gap-6 sm:gap-10 pt-4"></div>
+            </div>
+        </section>
+
+        <!-- CUADRO 7: DEGUSTACIÓN / CAPTURA DE LEADS -->
+        <section id="cuadro-degustacion" class="cognitive-section relative py-10 sm:py-14 px-4 sm:px-8 md:px-12 w-full" style="background:#f6f3ea;">
+            <div class="deg-panel max-w-7xl mx-auto rounded-[28px] sm:rounded-[32px] px-5 py-8 sm:px-8 sm:py-10 md:px-10 md:py-12 grid md:grid-cols-[.9fr_1.1fr] gap-8 lg:gap-12 items-center" id="deg-panel">
+                <div class="relative z-10 md:pr-5" id="deg-copy">
+                    <span id="deg-eyebrow" class="inline-block text-[10px] sm:text-xs font-black uppercase tracking-[.22em] mb-4">PRUÉBALA</span>
+                    <h2 id="deg-title" class="font-black leading-[1.02] tracking-tight whitespace-pre-line">Una degustación
+vale más que mil
+palabras.</h2>
+                    <p id="deg-subtitle" class="mt-5 max-w-lg leading-relaxed whitespace-pre-line">Cuéntanos sobre tu negocio y coordinamos una
+ degustación para que pruebes Pulpas Ya en tus propias
+ preparaciones.</p>
+                </div>
+
+                <form id="deg-form" class="deg-form rounded-2xl sm:rounded-3xl p-5 sm:p-7 md:p-8" onsubmit="event.preventDefault(); sendDegustationLead();">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input id="deg-name" required type="text" class="deg-field w-full rounded-xl px-3.5 py-3 text-xs sm:text-sm border" placeholder="Tu nombre *" autocomplete="name">
+                        <input id="deg-company" required type="text" class="deg-field w-full rounded-xl px-3.5 py-3 text-xs sm:text-sm border" placeholder="Empresa / negocio *" autocomplete="organization">
+                        <input id="deg-wa" required type="tel" class="deg-field w-full rounded-xl px-3.5 py-3 text-xs sm:text-sm border" placeholder="WhatsApp *" autocomplete="tel">
+                        <input id="deg-city" type="text" class="deg-field w-full rounded-xl px-3.5 py-3 text-xs sm:text-sm border" placeholder="Ciudad" autocomplete="address-level2">
+                        <select id="deg-business" class="deg-field w-full rounded-xl px-3.5 py-3 text-xs sm:text-sm border">
+                            <option value="Restaurante">Restaurante</option>
+                            <option value="Cafetería">Cafetería</option>
+                            <option value="Hotel">Hotel</option>
+                            <option value="Catering">Catering</option>
+                            <option value="Bodega">Bodega</option>
+                            <option value="Minimarket">Minimarket</option>
+                            <option value="Bar">Bar</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                        <select id="deg-interest" class="deg-field w-full rounded-xl px-3.5 py-3 text-xs sm:text-sm border">
+                            <option value="Jugos y refrescos">Jugos y refrescos</option>
+                            <option value="Cócteles y mocktails">Cócteles y mocktails</option>
+                            <option value="Postres">Postres</option>
+                            <option value="Salsas y gastronomía">Salsas y gastronomía</option>
+                            <option value="Preparaciones varias">Preparaciones varias</option>
+                        </select>
+                        <textarea id="deg-message" rows="3" class="deg-field sm:col-span-2 w-full rounded-xl px-3.5 py-3 text-xs sm:text-sm border resize-none" placeholder="¿Qué te gustaría preparar con la pulpa?"></textarea>
+                    </div>
+                    <button id="deg-submit" type="submit" class="w-full mt-4 py-3.5 rounded-xl font-extrabold text-sm shadow-lg transition hover:translate-y-[-1px]">Solicitar mi degustación →</button>
+                    <p id="deg-note" class="text-[10px] sm:text-xs text-center mt-3 opacity-75">Te contactaremos por WhatsApp para coordinar.</p>
+                </form>
+            </div>
+        </section>
+
+        <!-- FOOTER BAR -->
+        <footer id="rendered-footer" class="relative z-20 py-12 px-6 border-t border-zinc-900/80 text-center text-sm text-zinc-500 bg-zinc-950 w-full">
+            <p id="rendered-footer-title" class="font-extrabold text-base mb-1" style="color:#f4f4f5;">Pulpas Ya</p>
+            <p id="rendered-footer-subtitle" class="text-xs uppercase tracking-widest mb-4" style="color:#a1a1aa;"></p>
+            <p id="rendered-footer-text">© 2026 Pulpa Ya. Todos los derechos reservados.</p>
+        </footer>
+    </main>
+
+    <!-- VISUAL WORKBENCH V10 -->
+    <div id="visual-workbench-modal" aria-hidden="true">
+        <div class="visual-wb-sidebar">
+            <div class="visual-wb-top">
+                <div style="font-weight:900;color:#f59e0b;font-size:13px;flex:1">EDITOR VISUAL</div>
+                <button type="button" class="wb-btn danger" onclick="ve9Close()">Cerrar</button>
+            </div>
+            <div class="visual-wb-side-content">
+                <div class="visual-wb-section">
+                    <h4>Dispositivo</h4>
+                    <div id="ve9-device-pills"></div><div class="visual-wb-info" style="margin-top:4px">Un solo diseño maestro · PC / Tablet / Móvil son vistas adaptativas.</div>
+                </div>
+                <div class="visual-wb-section">
+                    <h4>Herramientas</h4>
+                    <div class="visual-wb-grid2">
+                        <button type="button" class="wb-btn" onclick="ve9AddText()">＋ Texto</button>
+                        <button type="button" class="wb-btn" onclick="ve9AddImage()">＋ Imagen</button>
+                        <button type="button" class="wb-btn" onclick="ve9Duplicate()">Duplicar</button>
+                        <button type="button" class="wb-btn" onclick="ve9Delete()">Eliminar</button>
+                    </div>
+                    <div style="height:8px"></div>
+                    <div class="visual-wb-grid2">
+                        <button type="button" class="wb-btn" onclick="ve9Undo()">↶ Deshacer</button>
+                        <button type="button" class="wb-btn" onclick="ve9Redo()">↷ Rehacer</button>
+                    </div>
+                </div>
+                <div class="visual-wb-section">
+                    <h4>Ir a sección</h4>
+                    <div class="visual-wb-nav">
+                        <select id="ve9-section-nav" onchange="ve9GoSection(this.value)">
+                            <option value="hero-section">Hero</option>
+                            <option value="diagnostico">Diagnóstico</option>
+                            <option value="catalogo">Catálogo</option>
+                            <option value="usos">Usos</option>
+                            <option value="nuestros-aliados">Aliados</option>
+                            <option value="cuadro-degustacion">Degustación</option>
+                            <option value="rendered-footer">Pie de página</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="visual-wb-section">
+                    <h4>Elemento seleccionado</h4>
+                    <div class="visual-wb-info" id="ve9-selected-info">Haz clic sobre cualquier texto, imagen, botón o cuadro dentro de la mesa.</div>
+                    <div id="ve9-editor-fields" style="display:none;margin-top:10px">
+                        <div class="visual-wb-field"><label>Texto</label><textarea id="ve9-text" oninput="ve9FieldText(this.value)"></textarea></div>
+                        <div class="visual-wb-grid2">
+                            <div class="visual-wb-field"><label>Color</label><input id="ve9-color" type="color" onchange="ve9FieldStyle('color',this.value)"></div>
+                            <div class="visual-wb-field"><label>Fondo</label><input id="ve9-bg" type="color" onchange="ve9FieldStyle('backgroundColor',this.value)"></div>
+                        </div>
+                        <div class="visual-wb-grid2">
+                            <div class="visual-wb-field"><label>Tamaño</label><input id="ve9-font" type="number" min="8" max="180" onchange="ve9FieldNumber('fontSize',this.value)"></div>
+                            <div class="visual-wb-field"><label>Ángulo</label><input id="ve9-angle" type="number" min="-180" max="180" onchange="ve9FieldNumber('rotateDeg',this.value)"></div>
+                        </div>
+                        <div class="visual-wb-grid2">
+                            <div class="visual-wb-field"><label>Tipografía</label><select id="ve9-fontfamily" onchange="ve9FieldStyle('fontFamily',this.value)"><option>Poppins</option><option>Inter</option><option>Montserrat</option><option>Playfair Display</option><option>Space Grotesk</option><option>Cinzel</option></select></div>
+                            <div class="visual-wb-field"><label>Peso</label><select id="ve9-weight" onchange="ve9FieldStyle('fontWeight',this.value)"><option value="300">Light</option><option value="400">Regular</option><option value="600">Seminegrita</option><option value="700">Negrita</option><option value="900">Black</option></select></div>
+                        </div>
+                        <div class="visual-wb-grid2">
+                            <div class="visual-wb-field"><label>Radio</label><input id="ve9-radius" type="number" min="0" max="100" onchange="ve9FieldNumber('borderRadius',this.value)"></div>
+                            <div class="visual-wb-field"><label>Opacidad %</label><input id="ve9-opacity" type="number" min="0" max="100" onchange="ve9FieldNumber('opacity',this.value)"></div>
+                        </div>
+                        <div class="visual-wb-grid2">
+                            <button type="button" class="wb-btn" onclick="ve9Align('left')">Izquierda</button>
+                            <button type="button" class="wb-btn" onclick="ve9Align('center')">Centro</button>
+                        </div>
+                        <div style="height:8px"></div>
+                        <label class="wb-btn" style="display:block;text-align:center">Cambiar imagen<input id="ve9-image-input" type="file" accept="image/*" hidden onchange="ve9ReplaceImage(event)"></label>
+                    </div>
+                </div>
+            </div>
+            <div class="visual-wb-status" id="ve9-status">Sin cambios</div>
+        </div>
+        <div class="visual-wb-stage">
+            <div class="visual-wb-toolbar">
+                <span class="wb-label">MESA DE TRABAJO</span>
+                <button type="button" class="wb-btn active" id="ve9-btn-desktop" onclick="ve9SwitchDevice('desktop')">PC</button>
+                <button type="button" class="wb-btn" id="ve9-btn-tablet" onclick="ve9SwitchDevice('tablet')">Tablet</button>
+                <button type="button" class="wb-btn" id="ve9-btn-mobile" onclick="ve9SwitchDevice('mobile')">Móvil</button>
+                <span style="flex:1"></span>
+                <button type="button" class="wb-btn" onclick="ve9Zoom(-0.1)">−</button>
+                <span id="ve9-zoom-label" style="min-width:46px;text-align:center;font:800 11px Poppins">100%</span>
+                <button type="button" class="wb-btn" onclick="ve9Zoom(0.1)">＋</button>
+                <button type="button" class="wb-btn" onclick="ve9Fit()">Ajustar</button>
+                <button type="button" class="wb-btn primary" onclick="ve9Save()">Guardar</button>
+            </div>
+            <div id="visual-wb-scroll">
+                <div id="visual-wb-page-wrap">
+                    <div id="visual-wb-page"></div>
+                    <div id="visual-wb-selection">
+                        <div class="vw-h vw-nw" data-handle="vw-nw"></div><div class="vw-h vw-ne" data-handle="vw-ne"></div><div class="vw-h vw-se" data-handle="vw-se"></div><div class="vw-h vw-sw" data-handle="vw-sw"></div><div class="vw-h vw-n" data-handle="vw-n"></div><div class="vw-h vw-e" data-handle="vw-e"></div><div class="vw-h vw-s" data-handle="vw-s"></div><div class="vw-h vw-w" data-handle="vw-w"></div><div class="vw-h vw-rot" data-handle="vw-rot"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRODUCT DETAIL MODAL -->
+    <div id="product-detail-modal" class="fixed inset-0 z-40 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="if (event.target === this) closeProductDetail()">
+        <div id="product-detail-box" class="glass-card max-w-4xl w-full rounded-3xl border border-zinc-800 shadow-2xl relative max-h-[92vh] overflow-y-auto animate-fadeIn">
+            <button type="button" onclick="closeProductDetail()" class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center" aria-label="Cerrar">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+            <div class="grid md:grid-cols-2 gap-0">
+                <div class="p-4 sm:p-6 space-y-3">
+                    <div class="relative rounded-2xl overflow-hidden bg-zinc-900 aspect-square">
+                        <img id="pd-main-img" src="" alt="" class="w-full h-full object-cover">
+                        <span id="pd-tag" class="absolute top-4 left-4 px-3.5 py-1.5 text-black font-extrabold text-[11px] uppercase rounded-full shadow-lg"></span>
+                    </div>
+                    <div id="pd-thumbs" class="flex gap-3 hidden"></div>
+                </div>
+                <div class="p-6 sm:p-8 space-y-5 flex flex-col justify-center">
+                    <div class="space-y-2.5">
+                        <span id="pd-format" class="text-xs font-extrabold uppercase tracking-widest block"></span>
+                        <h3 id="pd-title" class="text-2xl sm:text-3xl font-extrabold leading-snug"></h3>
+                        <p id="pd-desc" class="text-sm sm:text-base leading-relaxed whitespace-pre-line"></p>
+                    </div>
+                    <div class="pt-5 border-t border-zinc-800/80 space-y-4">
+                        <div class="flex items-center justify-between text-sm">
+                            <span id="pd-yield-label">Rendimiento:</span>
+                            <span id="pd-yield" class="font-extrabold font-mono"></span>
+                        </div>
+                        <button id="pd-quote-btn" type="button" onclick="quoteFromProductDetail()" class="w-full py-3.5 font-extrabold rounded-xl text-sm transition flex items-center justify-center gap-2 shadow" style="color:#000000;">
+                            <i data-lucide="shopping-bag" class="w-4 h-4"></i> DEGUSTAR
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WHATSAPP QUOTE MODAL -->
+    <div id="whatsapp-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full p-8 rounded-3xl border border-zinc-800 space-y-6 animate-fadeIn shadow-2xl">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500 text-black flex items-center justify-center font-bold">
+                        <i data-lucide="message-square" class="w-4 h-4"></i>
+                    </div>
+                    <h3 class="font-bold text-white text-sm">Cotización Express B2B</h3>
+                </div>
+                <button onclick="closeWhatsAppModal()" class="text-zinc-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs sm:text-sm">
+                <div>
+                    <label class="text-zinc-300 font-semibold block mb-1">Nombre o Razón Social:</label>
+                    <input type="text" id="ws-name" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 text-white outline-none focus:border-amber-500 transition" placeholder="Ej: Restobar El Galeón">
+                </div>
+
+                <div>
+                    <label class="text-zinc-300 font-semibold block mb-1">Tipo de Negocio:</label>
+                    <select id="ws-type" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 text-white outline-none focus:border-amber-500 transition">
+                        <option value="Restaurante / Bar">Restaurante / Bar</option>
+                        <option value="Hotel / Resort">Hotel / Resort</option>
+                        <option value="Catering / Eventos">Catering / Eventos</option>
+                        <option value="Minimarket / Bodega">Minimarket / Bodega</option>
+                        <option value="Distribuidor B2B">Distribuidor B2B</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-zinc-300 font-semibold block mb-1">Ciudad / Ubicación:</label>
+                    <input type="text" id="ws-city" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 text-white outline-none focus:border-amber-500 transition" placeholder="Ej: Lima / Arequipa">
+                </div>
+
+                <div>
+                    <label class="text-zinc-300 font-semibold block mb-1">Mensaje Adicional o Productos de Interés:</label>
+                    <textarea id="ws-msg" rows="3" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 text-white outline-none focus:border-amber-500 transition resize-none" placeholder="Solicito catálogo con precios mayoristas y muestras congeladas..."></textarea>
+                </div>
+            </div>
+
+            <button onclick="sendWhatsAppMessage()" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02]">
+                <i data-lucide="send" class="w-4 h-4"></i> Iniciar Chat de Cotización
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // DEFAULT CMS CONFIGURATION STATE WITH FULL COMPREHENSIVE COLOR TOKENS
+        const defaultConfig = {
+            brandName: 'Pulpas Ya',
+            customLogoUrl: '',
+            visualEditorV5: { version: 5, devices: { desktop: { overrides: {}, custom: [] }, tablet: { overrides: {}, custom: [] }, mobile: { overrides: {}, custom: [] } } },
+            headingFont: 'Poppins',
+            
+            // Comprehensive Color Tokens
+            bgGeneral: '#050507',
+            headerBg: '#141418',
+            headerText: '#ffffff',
+            accentColor: '#f59e0b',
+            heroSloganColor: '#fbbf24',
+            heroBadgeTextColor: '#fbbf24',
+            heroTitleColor: '#ffffff',
+            heroSubColor: '#d4d4d8',
+            btnBgColor: '#f59e0b',
+            cardBgColor: '#18181b',
+            cardBorderColor: '#27272a',
+            cardTextColor: '#ffffff',
+            catalogTitleColor: '#ffffff',
+
+            // Section colors (Diagnóstico, Catálogo, Aplicaciones, Aliados, Footer)
+            diagBgColor: '#09090b',
+            diagTextColor: '#a1a1aa',
+            diagTitleColor: '#ffffff',
+            diagSubtitleColor: '#fbbf24',
+            catalogBgColor: '#09090b',
+            catalogTextColor: '#a1a1aa',
+            catalogSubtitleColor: '#fbbf24',
+            usosBgColor: '#09090b',
+            usosTextColor: '#a1a1aa',
+            usosTitleColor: '#ffffff',
+            usosSubtitleColor: '#fbbf24',
+            alliesBgColor: '#09090b',
+            alliesTextColor: '#a1a1aa',
+            alliesTitleColor: '#ffffff',
+            alliesSubtitleColor: '#fbbf24',
+            // Color de tarjetas por sección ('' = estilo original)
+            diagCardBgColor: '',
+            catalogCardBgColor: '',
+            usosCardBgColor: '',
+            alliesCardBgColor: '',
+            footerBgColor: '#09090b',
+            footerTextColor: '#71717a',
+            footerTitleColor: '#f4f4f5',
+            footerSubtitleColor: '#a1a1aa',
+
+            heroBadge: 'CONCENTRADO B2B DE ALTO RENDIMIENTO',
+            heroTitle: 'Optimiza el Rendimiento de tu Cocina y Barra sin Perder Sabor',
+            heroSub: 'Pulpas pasteurizadas congeladas de fruta natural. Cero merma, estandarización total de acidez y preparación instantánea para restaurantes, bares y hoteles.',
+            heroFontSize: 56,
+            whatsapp: '51999888777',
+
+            // Cuadro de Degustación / Leads
+            degBgColor: '#f6f3ea',
+            degPanelBgColor: '#17533c',
+            degFormBgColor: '#ffffff',
+            degFormBorderColor: '#e0e4de',
+            degTitleColor: '#ffffff',
+            degSubtitleColor: '#cfe4d9',
+            degTextColor: '#cfe4d9',
+            degLabelColor: '#f28c28',
+            degInputBgColor: '#ffffff',
+            degInputTextColor: '#1f2937',
+            degInputBorderColor: '#dce2dd',
+            degButtonBgColor: '#f58b22',
+            degButtonTextColor: '#172019',
+            degTitleSize: 44,
+            degTextSize: 14,
+            degEyebrow: 'PRUÉBALA',
+            degTitle: 'Una degustación\nvale más que mil\npalabras.',
+            degSubtitle: 'Cuéntanos sobre tu negocio y coordinamos una\ndegustación para que pruebes Pulpas Ya en tus propias\npreparaciones.',
+            degButtonLabel: 'Solicitar mi degustación →',
+            degNote: 'Te contactaremos por WhatsApp para coordinar.',
+
+            // Cuadro: Banner superior / navegación editable
+            bannerSupItems: [
+                { id: 'producto', text: 'Producto', color: '#29463a', size: 13, font: 'Poppins', target: 'catalogo' },
+                { id: 'beneficios', text: 'Beneficios', color: '#29463a', size: 13, font: 'Poppins', target: 'diagnostico' },
+                { id: 'usos', text: 'Usos', color: '#29463a', size: 13, font: 'Poppins', target: 'usos' },
+                { id: 'negocios', text: 'Para negocios', color: '#29463a', size: 13, font: 'Poppins', target: 'cuadro-degustacion' }
+            ],
+
+            heroAlign: 'center',
+            diagAlign: 'center',
+            catalogAlign: 'left',
+
+            // 3D Engine Parameters
+            model3d: 'fruit',
+            color3d: '#f59e0b',
+            speed3d: 0.8,
+            particles3d: 1200,
+
+            // Catalog Items
+            catalog: [
+                {
+                    id: '1',
+                    name: 'PULPA DE MARACUYÁ 1KG',
+                    desc: 'Concentrado de fruta pasteurizada sin preservantes ni azúcar añadida. Sabor consistente los 365 días del año.',
+                    yield: '1 KG = 3.5 a 4 Litros',
+                    conversionRatio: 3.5,
+                    format: 'Pouch 1 KG congelado (-18°C)',
+                    tag: 'Más Vendido B2B',
+                    img: 'https:\/\/images.unsplash.com/photo-1579722884949-c16fb400aed6?q=80&w=800'
+                },
+                {
+                    id: '2',
+                    name: 'PULPA DE MANGO KITT 1KG',
+                    desc: 'Aroma intenso y pulpa 100% natural. Excelente densidad para batidos, heladería y coctelería tropical.',
+                    yield: '1 KG = 3.2 Litros',
+                    conversionRatio: 3.2,
+                    format: 'Pouch 1 KG congelado (-18°C)',
+                    tag: 'Línea Clásica',
+                    img: 'https:\/\/images.unsplash.com/photo-1553279768-865429fa0078?q=80&w=800'
+                },
+                {
+                    id: '3',
+                    name: 'CONCENTRADO REFRESCO 2L',
+                    desc: 'Formato especial para gran rendimiento en bodegas, minimarkets y caterings de alto flujo.',
+                    yield: '2 Litros = 8 Litros Listos',
+                    conversionRatio: 4.0,
+                    format: 'Botella 2 Litros',
+                    tag: 'Formato Ahorro',
+                    img: 'https:\/\/images.unsplash.com/photo-1621263764928-df1444c5e859?q=80&w=800'
+                }
+            ],
+
+            // Allies / Brand Partners
+            allies: [
+                {
+                    id: '1',
+                    name: 'Restobar El Pacífico',
+                    logo: 'https:\/\/images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w
